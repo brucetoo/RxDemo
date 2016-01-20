@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 测试在debug 版本中的app_name和 release版本中 app名字不一样,以及图标不一样的办法-->
+    <string name="app_name">App_DEBUG</string>
+</resources>
