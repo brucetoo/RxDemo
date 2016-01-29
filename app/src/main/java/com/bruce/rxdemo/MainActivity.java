@@ -9,6 +9,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.jakewharton.rxbinding.view.RxView;
+
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.schedulers.Schedulers;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -32,6 +42,48 @@ public class MainActivity extends AppCompatActivity {
                 "Roger Federer", "Andy Murray",
                 "Tomas Berdych", "Juan Martin Del Potro",
                 "Richard Gasquet", "John Isner"};
+
+        Observable.from(players)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(v -> v + "s")
+                .subscribe(new Subscriber<String>() {
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(String s) {
+
+                    }
+                });
+
+        Observable.create(new Observable.OnSubscribe<String>() {
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+
+            }
+        });
+
+        RxView.clicks(new View(this))
+                .throttleFirst(500, TimeUnit.MILLISECONDS)
+                .subscribe(aVoid -> System.out.println());
+        RxView.clickable(new View(this)).call(false);
+        RxView.globalLayouts(new View(this))
+                .subscribe(new Action1<Void>() {
+                    @Override
+                    public void call(Void aVoid) {
+
+                    }
+                });
+        View view = new View(this);
+
 
     }
 
