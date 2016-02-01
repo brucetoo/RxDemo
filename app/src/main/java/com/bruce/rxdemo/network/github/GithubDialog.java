@@ -1,5 +1,6 @@
 package com.bruce.rxdemo.network.github;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -11,8 +12,6 @@ import android.util.Log;
 import android.view.Display;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.webkit.CookieManager;
-import android.webkit.CookieSyncManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
@@ -43,7 +42,7 @@ public class GithubDialog extends Dialog {
 	private LinearLayout mContent;
 	private TextView mTitle;
 
-	private static final String TAG = "GitHub-WebView";
+	private static final String TAG = "GithubDialog";
 
 	public GithubDialog(Context context, String url,
 			OAuthDialogListener listener) {
@@ -60,10 +59,12 @@ public class GithubDialog extends Dialog {
 		mSpinner = new ProgressDialog(getContext());
 		mSpinner.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		mSpinner.setMessage("Loading...");
-		mContent = new LinearLayout(getContext());
+        mContent = new LinearLayout(getContext());
 		mContent.setOrientation(LinearLayout.VERTICAL);
+        //如果没有获取结果,不能点击外部消失
+        setCanceledOnTouchOutside(false);
 		setUpTitle();
-		setUpWebView();
+        setUpWebView();
 
 		Display display = getWindow().getWindowManager().getDefaultDisplay();
 		final float scale = getContext().getResources().getDisplayMetrics().density;
@@ -73,9 +74,7 @@ public class GithubDialog extends Dialog {
 		addContentView(mContent, new FrameLayout.LayoutParams(
 				(int) (dimensions[0] * scale + 0.5f), (int) (dimensions[1]
 						* scale + 0.5f)));
-		CookieSyncManager.createInstance(getContext());
-		CookieManager cookieManager = CookieManager.getInstance();
-		cookieManager.removeAllCookie();
+
 	}
 
 	private void setUpTitle() {
@@ -89,7 +88,24 @@ public class GithubDialog extends Dialog {
 		mContent.addView(mTitle);
 	}
 
-	private void setUpWebView() {
+	@SuppressLint("SetJavaScriptEnabled")
+    private void setUpWebView() {
+
+        //WebView通用设置参数等
+//        WebSettings settings = webview.getSettings();
+//        settings.setJavaScriptEnabled(true);//启用js
+//        settings.setJavaScriptCanOpenWindowsAutomatically(true);//js和android交互
+//        String cacheDirPath = PathCommonDefines.WEBVIEW_CACHE;
+//        settings.setAppCachePath(cacheDirPath); //设置缓存的指定路径
+//        settings.setAllowFileAccess(true); // 允许访问文件
+//        settings.setAppCacheEnabled(true); //设置H5的缓存打开,默认关闭
+//        settings.setUseWideViewPort(true);//设置webview自适应屏幕大小
+//        settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NARROW_COLUMNS);//设置，可能的话使所有列的宽度不超过屏幕宽度
+//        settings.setLoadWithOverviewMode(true);//设置webview自适应屏幕大小
+//        settings.setDomStorageEnabled(true);//设置可以使用localStorage
+//        settings.setSupportZoom(false);//关闭zoom按钮
+//        settings.setBuiltInZoomControls(false);//关闭zoom
+
 		mWebView = new WebView(getContext());
 		mWebView.setVerticalScrollBarEnabled(false);
 		mWebView.setHorizontalScrollBarEnabled(false);
@@ -106,6 +122,7 @@ public class GithubDialog extends Dialog {
 		public boolean shouldOverrideUrlLoading(WebView view, String url) {
 			Log.d(TAG, "Redirecting URL " + url);
 
+            //只有当授权成功后 切回调url 已 自定义的callbackUrl开头才自己处理
 			if (url.startsWith(GithubApp.mCallbackUrl)) {
 				String urls[] = url.split("=");
 				mListener.onComplete(urls[1]);
@@ -115,7 +132,7 @@ public class GithubDialog extends Dialog {
 			return false;
 		}
 
-		@Override
+        @Override
 		public void onReceivedError(WebView view, int errorCode,
 				String description, String failingUrl) {
 			Log.d(TAG, "Page error: " + description);
@@ -146,8 +163,8 @@ public class GithubDialog extends Dialog {
 	}
 
 	public interface OAuthDialogListener {
-		public abstract void onComplete(String accessToken);
-		public abstract void onError(String error);
+         void onComplete(String accessToken);
+         void onError(String error);
 	}
 
 }

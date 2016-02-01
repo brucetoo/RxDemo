@@ -18,11 +18,29 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+    //读取properties中的信息
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def clientId = properties.getProperty('cliend_id')
+    def secretSecret = properties.getProperty('client_secret')
+    def callBackUrl = properties.getProperty('callback_url')
 
     buildTypes {
+
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField("String","client_id",clientId)
+            buildConfigField("String","client_secret",secretSecret)
+            buildConfigField("String","callback_url",callBackUrl)
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField("String","client_id",clientId)
+            buildConfigField("String","client_secret",secretSecret)
+            buildConfigField("String","callback_url",callBackUrl)
         }
     }
 

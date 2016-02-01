@@ -7,6 +7,7 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.bruce.rxdemo.BuildConfig;
 import com.bruce.rxdemo.R;
 import com.bruce.rxdemo.network.github.GithubApp;
 
@@ -20,6 +21,7 @@ import butterknife.OnClick;
  */
 public class LoginActivity extends FragmentActivity {
 
+    private GithubApp mApp;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -27,14 +29,12 @@ public class LoginActivity extends FragmentActivity {
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
-        mApp = new GithubApp(this, "brucetoo","ty8922436","http://example.com/path");
+        mApp = new GithubApp(this, BuildConfig.client_id,BuildConfig.client_secret,BuildConfig.callback_url);
         mApp.setListener(listener);
     }
-    GithubApp mApp;
 
     @OnClick(R.id.btn_login)
     void loginClick() {
-
         work();
     }
 
@@ -68,7 +68,7 @@ public class LoginActivity extends FragmentActivity {
         }
 
         if (mApp.hasAccessToken()) {
-           Log.e("result ","name--"+mApp.getUserName());
+           Log.e("result ","token--"+mApp.getAccessToken());
         }
 
     }

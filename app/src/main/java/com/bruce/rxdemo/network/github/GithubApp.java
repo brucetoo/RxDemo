@@ -6,9 +6,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-import org.json.JSONObject;
-import org.json.JSONTokener;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,205 +13,174 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * 
- * @author Thiago Locatelli <thiago.locatelli@gmail.com>
- * @author Lorensius W. L T <lorenz@londatiga.net>
- * 
- */
 public class GithubApp {
-	private GithubSession mSession;
-	private GithubDialog mDialog;
-	private OAuthAuthenticationListener mListener;
-	private ProgressDialog mProgress;
-	private String mAuthUrl;
-	private String mTokenUrl;
-	private String mAccessToken;
+    private GithubSession mSession;
+    private GithubDialog mDialog;
+    private OAuthAuthenticationListener mListener;
+    private ProgressDialog mProgress;
+    private String mAuthUrl;
+    private String mTokenUrl;
+    private String mAccessToken;
 
-	/**
-	 * Callback url, as set in 'Manage OAuth Costumers' page
-	 * (https://developer.github.com/)
-	 */
+    /**
+     * Callback url, 在setting中自定义的
+     * (https://github.com/settings/developers/)
+     */
 
-	public static String mCallbackUrl = "";
-	private static final String AUTH_URL = "https://github.com/login/oauth/authorize?";
-	private static final String TOKEN_URL = "https://github.com/login/oauth/access_token?";
-	private static final String API_URL = "https://api.github.com";
+    public static String mCallbackUrl = "";
+    private static final String AUTH_URL = "https://github.com/login/oauth/authorize?";
+    private static final String TOKEN_URL = "https://github.com/login/oauth/access_token?";
+    private static final String API_URL = "https://api.github.com";
 
-	private static final String TAG = "GitHubAPI";
+    private static final String TAG = "GitHubAPI";
 
-	public GithubApp(Context context, String clientId, String clientSecret,
-			String callbackUrl) {
-		mSession = new GithubSession(context);
-		mAccessToken = mSession.getAccessToken();
-		mCallbackUrl = callbackUrl;
-		mTokenUrl = TOKEN_URL + "client_id=" + clientId + "&client_secret="
-				+ clientSecret + "&redirect_uri=" + mCallbackUrl;
-		mAuthUrl = AUTH_URL + "client_id=" + clientId + "&redirect_uri="
-				+ mCallbackUrl;
+    /**
+     * https://github.com/settings/developers 在此注册自己app的信息 获取clientId 和 cliendSecret
+     *
+     * @param context      上下文
+     * @param clientId     app client id
+     * @param clientSecret app client secret
+     * @param callbackUrl  自定义回调的url  (需要是在创建app信息的时候的callback url的子路径)
+     */
+    public GithubApp(Context context, String clientId, String clientSecret,
+                     String callbackUrl) {
 
-		GithubDialog.OAuthDialogListener listener = new GithubDialog.OAuthDialogListener() {
-			@Override
-			public void onComplete(String code) {
-				getAccessToken(code);
-			}
+        mSession = new GithubSession(context);
+        mAccessToken = mSession.getAccessToken();
+        mCallbackUrl = callbackUrl;
+        mTokenUrl = TOKEN_URL + "client_id=" + clientId + "&client_secret="
+                + clientSecret + "&redirect_uri=" + mCallbackUrl;
+        mAuthUrl = AUTH_URL + "client_id=" + clientId + "&redirect_uri="
+                + mCallbackUrl;
 
-			@Override
-			public void onError(String error) {
-				mListener.onFail("Authorization failed");
-			}
-		};
+        mDialog = new GithubDialog(context, mAuthUrl, listener);
+        mProgress = new ProgressDialog(context);
+        mProgress.setCancelable(false);
+        mProgress.setCanceledOnTouchOutside(false);
+    }
 
-		mDialog = new GithubDialog(context, mAuthUrl, listener);
-		mProgress = new ProgressDialog(context);
-		mProgress.setCancelable(false);
-	}
 
-	private void getAccessToken(final String code) {
-		mProgress.setMessage("Getting access token ...");
-		mProgress.show();
+    GithubDialog.OAuthDialogListener listener = new GithubDialog.OAuthDialogListener() {
+        @Override
+        public void onComplete(String code) {
+            //授权成功 获取 access token
+            getAccessToken(code);
+        }
 
-		new Thread() {
-			@Override
-			public void run() {
-				Log.i(TAG, "Getting access token");
-				int what = 0;
+        @Override
+        public void onError(String error) {
+            mListener.onFail("Authorization failed");
+        }
+    };
 
-				try {
-					URL url = new URL(mTokenUrl + "&code=" + code);
-					Log.i(TAG, "Opening URL " + url.toString());
-					HttpURLConnection urlConnection = (HttpURLConnection) url
-							.openConnection();
-					urlConnection.setRequestMethod("GET");
-					urlConnection.setDoInput(true);
-					urlConnection.setDoOutput(true);
-					urlConnection.connect();
-					String response = streamToString(urlConnection
-							.getInputStream());
-					Log.i(TAG, "response " + response);
-					mAccessToken = response.substring(
-							response.indexOf("access_token=") + 13,
-							response.indexOf("&token_type"));
-					Log.i(TAG, "Got access token: " + mAccessToken);
-				} catch (Exception ex) {
-					what = 1;
-					ex.printStackTrace();
-				}
+    /**
+     * 获取access token
+     *
+     * @param code
+     */
+    private void getAccessToken(final String code) {
+        mProgress.setMessage("Getting access token ...");
+        mProgress.show();
 
-				mHandler.sendMessage(mHandler.obtainMessage(what, 1, 0));
-			}
-		}.start();
-	}
+        new Thread() {
+            @Override
+            public void run() {
+                Log.i(TAG, "Getting access token");
+                int what = 0;
 
-	private void fetchUserName() {
-		mProgress.setMessage("Finalizing ...");
+                try {
+                    URL url = new URL(mTokenUrl + "&code=" + code);
+                    Log.i(TAG, "Opening URL " + url.toString());
+                    HttpURLConnection urlConnection = (HttpURLConnection) url
+                            .openConnection();
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.setDoInput(true);
+                    urlConnection.setDoOutput(true);
+                    urlConnection.connect();
+                    String response = streamToString(urlConnection
+                            .getInputStream());
+                    Log.i(TAG, "response " + response);
+                    mAccessToken = response.substring(
+                            response.indexOf("access_token=") + 13,
+                            response.indexOf("&token_type"));
+                    Log.i(TAG, "Got access token: " + mAccessToken.substring(0, mAccessToken.indexOf("&scope=")));
+                    mSession.storeAccessToken(mAccessToken.substring(0, mAccessToken.indexOf("&scope=")));
+                } catch (Exception ex) {
+                    what = 1;
+                    ex.printStackTrace();
+                }
 
-		new Thread() {
-			@Override
-			public void run() {
-				Log.i(TAG, "Fetching user info");
-				int what = 0;
+                mHandler.sendMessage(mHandler.obtainMessage(what, 1, 0));
+            }
+        }.start();
+    }
 
-				try {
-					URL url = new URL(API_URL + "/user?access_token="
-							+ mAccessToken);
+    private Handler mHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            if (msg.what == 0) {
+                mProgress.dismiss();
+                mListener.onSuccess();
+            } else {//获取token失败
+                mProgress.dismiss();
+                mListener.onFail("Failed to get access token");
+            }
+            return true;
+        }
+    });
 
-					Log.d(TAG, "Opening URL " + url.toString());
-					HttpURLConnection urlConnection = (HttpURLConnection) url
-							.openConnection();
-					urlConnection.setRequestMethod("GET");
-					urlConnection.setDoInput(true);
-					urlConnection.setDoOutput(true);
-					urlConnection.connect();
-					String response = streamToString(urlConnection
-							.getInputStream());
+    public boolean hasAccessToken() {
+        return mAccessToken != null;
+    }
 
-					System.out.println(response);
-					JSONObject jsonObj = (JSONObject) new JSONTokener(response)
-							.nextValue();
-					String id = jsonObj.getString("id");
-					String login = jsonObj.getString("login");
-					Log.i(TAG, "Got user name: " + login);
-					mSession.storeAccessToken(mAccessToken, id, login);
-				} catch (Exception ex) {
-					what = 1;
-					ex.printStackTrace();
-				}
+    public void setListener(OAuthAuthenticationListener listener) {
+        mListener = listener;
+    }
 
-				mHandler.sendMessage(mHandler.obtainMessage(what, 2, 0));
-			}
-		}.start();
-	}
+    public String getAccessToken() {
+        return mSession.getAccessToken();
+    }
 
-	private Handler mHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			if (msg.arg1 == 1) {
-				if (msg.what == 0) {
-					fetchUserName();
-				} else {
-					mProgress.dismiss();
-					mListener.onFail("Failed to get access token");
-				}
-			} else {
-				mProgress.dismiss();
-				mListener.onSuccess();
-			}
-		}
-	};
+    public void authorize() {
+        mDialog.show();
+    }
 
-	public boolean hasAccessToken() {
-		return (mAccessToken == null) ? false : true;
-	}
+    private String streamToString(InputStream is) throws IOException {
+        String str = "";
 
-	public void setListener(OAuthAuthenticationListener listener) {
-		mListener = listener;
-	}
+        if (is != null) {
+            StringBuilder sb = new StringBuilder();
+            String line;
 
-	public String getUserName() {
-		return mSession.getUsername();
-	}
+            try {
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(is));
 
-	public void authorize() {
-		mDialog.show();
-	}
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
 
-	private String streamToString(InputStream is) throws IOException {
-		String str = "";
+                reader.close();
+            } finally {
+                is.close();
+            }
 
-		if (is != null) {
-			StringBuilder sb = new StringBuilder();
-			String line;
+            str = sb.toString();
+        }
 
-			try {
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(is));
+        return str;
+    }
 
-				while ((line = reader.readLine()) != null) {
-					sb.append(line);
-				}
+    public void resetAccessToken() {
+        if (mAccessToken != null) {
+            mSession.resetAccessToken();
+            mAccessToken = null;
+        }
+    }
 
-				reader.close();
-			} finally {
-				is.close();
-			}
+    public interface OAuthAuthenticationListener {
+          void onSuccess();
 
-			str = sb.toString();
-		}
-
-		return str;
-	}
-
-	public void resetAccessToken() {
-		if (mAccessToken != null) {
-			mSession.resetAccessToken();
-			mAccessToken = null;
-		}
-	}
-
-	public interface OAuthAuthenticationListener {
-		public abstract void onSuccess();
-
-		public abstract void onFail(String error);
-	}
+          void onFail(String error);
+    }
 }
