@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">RxAndroid-demo</string>
+    <string name="app_name">GHClient</string>
     <string name="action_settings">Settings</string>
     <integer name="google_play_services_version">1</integer>
 </resources>

@@ -12,4 +12,12 @@
         android:layout_gravity="center"
         />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_get_profile"
+        android:text="Profile"
+        android:layout_gravity="center"
+        />
+
 </LinearLayout>

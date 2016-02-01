@@ -74,7 +74,5 @@ dependencies {
     compile 'com.squareup.retrofit2:adapter-rxjava:2.0.0-beta3'
 
     compile 'com.jakewharton:butterknife:7.0.1'
-
-    compile 'com.github.scribejava:scribejava-apis:2.2.0'
-//    compile 'org.kohsuke:github-api:1.72'
+    compile 'com.jakewharton.timber:timber:4.1.0'
 }

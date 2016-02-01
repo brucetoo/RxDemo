@@ -6,6 +6,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import org.json.JSONObject;
+import org.json.JSONTokener;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -115,15 +118,59 @@ public class GithubApp {
         }.start();
     }
 
+    private void fetchUserName() {
+        mProgress.setMessage("Finalizing ...");
+
+        new Thread() {
+            @Override
+            public void run() {
+                Log.i(TAG, "Fetching user info");
+                int what = 0;
+
+                try {
+                    URL url = new URL(API_URL + "/user?access_token="
+                            + mAccessToken.substring(0, mAccessToken.indexOf("&scope=")));
+
+                    Log.d(TAG, "Opening URL " + url.toString());
+                    HttpURLConnection urlConnection = (HttpURLConnection) url
+                            .openConnection();
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.setDoInput(true);
+                    //http://stackoverflow.com/questions/16255823/httpurlconnection-java-io-filenotfoundexception
+                    //setDoOutput 默认是false
+                    urlConnection.setDoOutput(false);
+                    urlConnection.connect();
+                    String response = streamToString(urlConnection
+                            .getInputStream());
+                    System.out.println(response);
+                    JSONObject jsonObj = (JSONObject) new JSONTokener(response)
+                            .nextValue();
+                    String login = jsonObj.getString("login");
+                    Log.i(TAG, "Got user name: " + login);
+                    mSession.storeUserName(login);
+                } catch (Exception ex) {
+                    what = 1;
+                    ex.printStackTrace();
+                }
+
+                mHandler.sendMessage(mHandler.obtainMessage(what, 2, 0));
+            }
+        }.start();
+    }
+
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
-            if (msg.what == 0) {
+            if (msg.arg1 == 1) {
+                if (msg.what == 0) {
+                    fetchUserName();
+                } else {
+                    mProgress.dismiss();
+                    mListener.onFail("Failed to get access token");
+                }
+            } else {
                 mProgress.dismiss();
                 mListener.onSuccess();
-            } else {//获取token失败
-                mProgress.dismiss();
-                mListener.onFail("Failed to get access token");
             }
             return true;
         }
@@ -140,6 +187,11 @@ public class GithubApp {
     public String getAccessToken() {
         return mSession.getAccessToken();
     }
+
+    public String getUserName(){
+        return mSession.getUserName();
+    }
+
 
     public void authorize() {
         mDialog.show();

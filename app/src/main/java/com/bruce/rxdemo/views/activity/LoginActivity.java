@@ -9,10 +9,17 @@ import android.widget.Toast;
 
 import com.bruce.rxdemo.BuildConfig;
 import com.bruce.rxdemo.R;
+import com.bruce.rxdemo.models.User;
+import com.bruce.rxdemo.network.GithubService;
+import com.bruce.rxdemo.network.GithubServiceManager;
 import com.bruce.rxdemo.network.github.GithubApp;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+import timber.log.Timber;
 
 /**
  * Created by Bruce too
@@ -21,7 +28,8 @@ import butterknife.OnClick;
  */
 public class LoginActivity extends FragmentActivity {
 
-    private GithubApp mApp;
+    private GithubApp mGithubApp;
+    private GithubService mGithubServie;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -29,9 +37,34 @@ public class LoginActivity extends FragmentActivity {
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
-        mApp = new GithubApp(this, BuildConfig.client_id,BuildConfig.client_secret,BuildConfig.callback_url);
-        mApp.setListener(listener);
+        mGithubApp = new GithubApp(this, BuildConfig.client_id, BuildConfig.client_secret, BuildConfig.callback_url);
+        mGithubApp.setListener(listener);
+        mGithubServie = GithubServiceManager.createGithubService();
     }
+
+    @OnClick(R.id.btn_get_profile)
+    void getProfile() {
+        mGithubServie.getOwnProfile(mGithubApp.getUserName())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<User>() {
+                    @Override
+                    public void onCompleted() {
+                        Timber.e("onCompleted");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Timber.e(e, "user - error");
+                    }
+
+                    @Override
+                    public void onNext(User user) {
+                        Timber.e("Fetch successfully user.name = %s",user.name);
+                    }
+                });
+    }
+
 
     @OnClick(R.id.btn_login)
     void loginClick() {
@@ -42,7 +75,7 @@ public class LoginActivity extends FragmentActivity {
 
         //https://github.com/thiagolocatelli/android-github-oauth
 
-        if (mApp.hasAccessToken()) {
+        if (mGithubApp.hasAccessToken()) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(
                     LoginActivity.this);
             builder.setMessage("Disconnect from GitHub?")
@@ -51,7 +84,7 @@ public class LoginActivity extends FragmentActivity {
                             new DialogInterface.OnClickListener() {
                                 public void onClick(
                                         DialogInterface dialog, int id) {
-                                    mApp.resetAccessToken();
+                                    mGithubApp.resetAccessToken();
                                 }
                             })
                     .setNegativeButton("No",
@@ -64,27 +97,27 @@ public class LoginActivity extends FragmentActivity {
             final AlertDialog alert = builder.create();
             alert.show();
         } else {
-            mApp.authorize();
+            mGithubApp.authorize();
         }
 
-        if (mApp.hasAccessToken()) {
-           Log.e("result ","token--"+mApp.getAccessToken());
+        if (mGithubApp.hasAccessToken()) {
+            Log.e("result ", "token--" + mGithubApp.getAccessToken());
         }
 
     }
 
 
- GithubApp.OAuthAuthenticationListener listener = new GithubApp.OAuthAuthenticationListener() {
+    GithubApp.OAuthAuthenticationListener listener = new GithubApp.OAuthAuthenticationListener() {
 
-    @Override
-    public void onSuccess() {
+        @Override
+        public void onSuccess() {
+            Toast.makeText(LoginActivity.this, "Access token successful", Toast.LENGTH_SHORT).show();
+        }
 
-    }
-
-    @Override
-    public void onFail(String error) {
-        Toast.makeText(LoginActivity.this, error, Toast.LENGTH_SHORT).show();
-    }
-};
+        @Override
+        public void onFail(String error) {
+            Toast.makeText(LoginActivity.this, error, Toast.LENGTH_SHORT).show();
+        }
+    };
 
 }
