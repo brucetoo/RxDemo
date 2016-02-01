@@ -1,4 +1,4 @@
-package com.bruce.rxdemo.network.github;
+package com.bruce.ghclient.network.github;
 
 import android.app.ProgressDialog;
 import android.content.Context;

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="com.bruce.rxdemo"
+<manifest package="com.bruce.ghclient"
           xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:name=".GHClientApp"
+        android:name="com.bruce.ghclient.GHClientApp"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.bruce.rxdemo.views.activity.LoginActivity"
+            android:name="com.bruce.ghclient.views.activity.LoginActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>

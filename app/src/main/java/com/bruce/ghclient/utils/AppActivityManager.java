@@ -1,4 +1,4 @@
-package com.bruce.rxdemo.utils;
+package com.bruce.ghclient.utils;
 
 import android.app.Activity;
 

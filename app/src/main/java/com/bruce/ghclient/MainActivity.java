@@ -1,4 +1,4 @@
-package com.bruce.rxdemo;
+package com.bruce.ghclient;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;

@@ -1,4 +1,4 @@
-package com.bruce.rxdemo.views.activity;
+package com.bruce.ghclient.views.activity;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -7,12 +7,12 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.bruce.rxdemo.BuildConfig;
-import com.bruce.rxdemo.R;
-import com.bruce.rxdemo.models.User;
-import com.bruce.rxdemo.network.GithubService;
-import com.bruce.rxdemo.network.GithubServiceManager;
-import com.bruce.rxdemo.network.github.GithubApp;
+import com.bruce.ghclient.BuildConfig;
+import com.bruce.ghclient.R;
+import com.bruce.ghclient.models.User;
+import com.bruce.ghclient.network.GithubService;
+import com.bruce.ghclient.network.GithubServiceManager;
+import com.bruce.ghclient.network.github.GithubApp;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -60,7 +60,7 @@ public class LoginActivity extends FragmentActivity {
 
                     @Override
                     public void onNext(User user) {
-                        Timber.e("Fetch successfully user.name = %s",user.name);
+                        Timber.e("Fetch successfully user.name = %s", user.name);
                     }
                 });
     }

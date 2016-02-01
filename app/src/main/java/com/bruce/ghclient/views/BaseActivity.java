@@ -1,10 +1,10 @@
-package com.bruce.rxdemo.views;
+package com.bruce.ghclient.views;
 
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.v4.app.FragmentActivity;
 
-import com.bruce.rxdemo.utils.AppActivityManager;
+import com.bruce.ghclient.utils.AppActivityManager;
 
 /**
  * Created by Bruce too

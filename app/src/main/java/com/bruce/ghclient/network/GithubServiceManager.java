@@ -1,10 +1,10 @@
-package com.bruce.rxdemo.network;
+package com.bruce.ghclient.network;
 
 import android.text.TextUtils;
 import android.widget.Toast;
 
-import com.bruce.rxdemo.GHClientApp;
-import com.bruce.rxdemo.network.github.GithubSession;
+import com.bruce.ghclient.GHClientApp;
+import com.bruce.ghclient.network.github.GithubSession;
 
 import java.io.IOException;
 

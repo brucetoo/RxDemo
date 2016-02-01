@@ -1,6 +1,6 @@
-package com.bruce.rxdemo.network;
+package com.bruce.ghclient.network;
 
-import com.bruce.rxdemo.models.User;
+import com.bruce.ghclient.models.User;
 
 import retrofit2.http.GET;
 import retrofit2.http.Path;

@@ -1,4 +1,4 @@
-package com.bruce.rxdemo.network.github;
+package com.bruce.ghclient.network.github;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;

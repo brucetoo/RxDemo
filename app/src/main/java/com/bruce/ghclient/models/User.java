@@ -1,4 +1,4 @@
-package com.bruce.rxdemo.models;
+package com.bruce.ghclient.models;
 
 /**
  * Created by Bruce too
