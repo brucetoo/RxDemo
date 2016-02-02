@@ -1,5 +1,7 @@
 package com.bruce.ghclient;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
@@ -14,15 +16,30 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bruce.ghclient.models.User;
+import com.bruce.ghclient.network.GithubService;
+import com.bruce.ghclient.network.GithubServiceManager;
+import com.bruce.ghclient.network.github.GithubPreManager;
+import com.bruce.ghclient.utils.ImageUtils;
 import com.bruce.ghclient.views.fragment.TestFragment;
+import com.bruce.ghclient.widget.CircleImageView;
+import com.bruce.ghclient.widget.ProgressWheel;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.SimpleTarget;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,12 +55,36 @@ public class MainActivity extends AppCompatActivity {
     TabLayout mTabLayout;
 
     private long preClickTime;
+    private GithubService mGithubService;
+    private View mHeaderView;
+    private CircleImageView mAvatar;
+    private TextView mName;
+    private TextView mLocation;
+    private ProgressWheel mProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        setUpToolBar();
+
+        setUpHeaderView();
+
+        setUpViewPager();
+    }
+
+    private void setUpHeaderView() {
+        mHeaderView = mNavView.getHeaderView(0);
+        mAvatar = (CircleImageView) mHeaderView.findViewById(R.id.img_avatar);
+        mName = (TextView) mHeaderView.findViewById(R.id.text_name);
+        mLocation = (TextView) mHeaderView.findViewById(R.id.text_location);
+        mProgress = (ProgressWheel) mHeaderView.findViewById(R.id.progress);
+        mProgress.setBarColor(R.color.colorPrimary);
+    }
+
+    private void setUpToolBar() {
         setSupportActionBar(mToolBar);
 
         //Set up home button animation
@@ -61,8 +102,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
-        setUpViewPager();
     }
 
     private void setUpViewPager() {
@@ -75,6 +114,44 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        mGithubService = GithubServiceManager.createGithubService();
+        mGithubService.getUserProfile(GithubPreManager.getUserName())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<User>() {
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                       mProgress.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onNext(User user) {
+                        mProgress.setVisibility(View.GONE);
+                        mName.setText(user.name);
+                        mLocation.setText(user.location);
+                        Glide.with(MainActivity.this)
+                                .load(user.avatar_url)
+                                .asBitmap()
+                                .placeholder(R.drawable.ic_launcher)
+                                .into(new SimpleTarget<Bitmap>() {
+                                    @Override
+                                    public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                                         mAvatar.setImageBitmap(resource);
+                                         mHeaderView.setBackground(new BitmapDrawable(ImageUtils.blurBitmap(resource, 20)));
+                                    }
+                                });
+                    }
+                });
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -83,9 +160,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
         switch (id) {
@@ -107,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
             preClickTime = System.currentTimeMillis();
             Toast.makeText(getApplicationContext(), "Press again to Exit!",
                     Toast.LENGTH_SHORT).show();
-        }else {
+        } else {
             super.onBackPressed();
         }
     }

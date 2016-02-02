@@ -1,18 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:background="?attr/colorPrimaryDark"
-              android:padding="16dp"
-              android:theme="@style/ThemeOverlay.AppCompat.Dark"
-              android:gravity="center"
-              android:layout_width="match_parent"
-              android:layout_height="192dp">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/layout_header_root"
+                android:layout_width="match_parent"
+                android:layout_height="192dp">
+
+    <com.bruce.ghclient.widget.CircleImageView
+        android:id="@+id/img_avatar"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:scaleType="centerCrop"
+        app:civ_border_color="@color/colorPrimary"
+        app:civ_border_width="0dp"
+        tools:src="@drawable/ic_launcher"
+        />
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/text_name"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Username"
-        android:gravity="center"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1"/>
+        android:layout_below="@+id/img_avatar"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:textColor="@android:color/black"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        android:typeface="monospace"
+        android:text="@string/text_place_holder"
+        />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/text_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/text_name"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:drawableLeft="@drawable/icon_location"
+        android:drawablePadding="4dp"
+        android:textColor="#80000000"
+        android:textSize="22sp"
+        android:typeface="serif"
+        android:text="@string/text_place_holder"
+        />
+ <com.bruce.ghclient.widget.ProgressWheel
+     android:layout_width="50dp"
+     android:layout_height="50dp"
+     android:layout_centerInParent="true"
+     android:id="@+id/progress"
+     app:matProg_barColor="@color/colorPrimaryDark"
+     app:matProg_progressIndeterminate="true"
+     />
+</RelativeLayout>
