@@ -1,90 +1,77 @@
 package com.bruce.ghclient;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.design.widget.NavigationView;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
+import android.widget.Toast;
 
-import com.jakewharton.rxbinding.view.RxView;
+import com.bruce.ghclient.views.fragment.TestFragment;
 
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
 
-import rx.Observable;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
+import butterknife.Bind;
+import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity {
+
+    @Bind(R.id.drawer_layout)
+    DrawerLayout mDrawerLayout;
+    @Bind(R.id.nav_view)
+    NavigationView mNavView;
+    @Bind(R.id.view_pager)
+    ViewPager mPager;
+    @Bind(R.id.tool_bar)
+    Toolbar mToolBar;
+    @Bind(R.id.tab_layout)
+    TabLayout mTabLayout;
+
+    private long preClickTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        ButterKnife.bind(this);
+        setSupportActionBar(mToolBar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        //Set up home button animation
+        ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, mToolBar, R.string.app_name, R.string.app_name);
+        mDrawerLayout.setDrawerListener(drawerToggle);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        drawerToggle.syncState();
+
+        mNavView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public boolean onNavigationItemSelected(MenuItem item) {
+                item.setChecked(true);
+                mDrawerLayout.closeDrawers();
+                return true;
             }
         });
 
-        String[] players = {"Rafael Nadal", "Novak Djokovic",
-                "Stanislas Wawrinka", "David Ferrer",
-                "Roger Federer", "Andy Murray",
-                "Tomas Berdych", "Juan Martin Del Potro",
-                "Richard Gasquet", "John Isner"};
+        setUpViewPager();
+    }
 
-        Observable.from(players)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .map(v -> v + "s")
-                .subscribe(new Subscriber<String>() {
-                    @Override
-                    public void onCompleted() {
-
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onNext(String s) {
-
-                    }
-                });
-
-        Observable.create(new Observable.OnSubscribe<String>() {
-            @Override
-            public void call(Subscriber<? super String> subscriber) {
-
-            }
-        });
-
-        RxView.clicks(new View(this))
-                .throttleFirst(500, TimeUnit.MILLISECONDS)
-                .subscribe(aVoid -> System.out.println());
-        RxView.clickable(new View(this)).call(false);
-        RxView.globalLayouts(new View(this))
-                .subscribe(new Action1<Void>() {
-                    @Override
-                    public void call(Void aVoid) {
-
-                    }
-                });
-        View view = new View(this);
-
-
+    private void setUpViewPager() {
+        Adapter adapter = new Adapter(getSupportFragmentManager());
+        adapter.addFragment(new TestFragment(), "Category 1");
+        adapter.addFragment(new TestFragment(), "Category 2");
+        adapter.addFragment(new TestFragment(), "Category 3");
+        mPager.setAdapter(adapter);
+        mTabLayout.setupWithViewPager(mPager);
     }
 
     @Override
@@ -101,11 +88,56 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (id) {
+            case R.id.action_settings:
+
+                break;
+            case android.R.id.home:
+                mDrawerLayout.openDrawer(GravityCompat.START);
+                break;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        if (System.currentTimeMillis() - preClickTime >= 2000) {
+            preClickTime = System.currentTimeMillis();
+            Toast.makeText(getApplicationContext(), "Press again to Exit!",
+                    Toast.LENGTH_SHORT).show();
+        }else {
+            super.onBackPressed();
+        }
+    }
+
+    static class Adapter extends FragmentPagerAdapter {
+        private final List<Fragment> mFragments = new ArrayList<>();
+        private final List<String> mFragmentTitles = new ArrayList<>();
+
+        public Adapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        public void addFragment(Fragment fragment, String title) {
+            mFragments.add(fragment);
+            mFragmentTitles.add(title);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return mFragments.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return mFragments.size();
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return mFragmentTitles.get(position);
+        }
     }
 }
