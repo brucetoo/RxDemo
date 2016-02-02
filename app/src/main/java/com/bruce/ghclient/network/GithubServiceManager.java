@@ -4,7 +4,7 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.bruce.ghclient.GHClientApp;
-import com.bruce.ghclient.network.github.GithubSession;
+import com.bruce.ghclient.network.github.GithubPreManager;
 
 import java.io.IOException;
 
@@ -32,9 +32,7 @@ public class GithubServiceManager {
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())  // 使用 rxjava
                 .baseUrl("https://api.github.com");
 
-
-        GithubSession session = new GithubSession(GHClientApp.getAppContext());
-        String githubToken = session.getAccessToken();
+        String githubToken = GithubPreManager.getAccessToken();
         if(githubToken != null) {
             //下面代码可以做请求拦截
             if (!TextUtils.isEmpty(githubToken)) {

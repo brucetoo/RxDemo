@@ -2,24 +2,22 @@ package com.bruce.ghclient.views.activity;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.bruce.ghclient.BuildConfig;
+import com.bruce.ghclient.MainActivity;
 import com.bruce.ghclient.R;
-import com.bruce.ghclient.models.User;
 import com.bruce.ghclient.network.GithubService;
 import com.bruce.ghclient.network.GithubServiceManager;
 import com.bruce.ghclient.network.github.GithubApp;
+import com.bruce.ghclient.network.github.GithubPreManager;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import timber.log.Timber;
 
 /**
  * Created by Bruce too
@@ -42,39 +40,19 @@ public class LoginActivity extends FragmentActivity {
         mGithubServie = GithubServiceManager.createGithubService();
     }
 
-    @OnClick(R.id.btn_get_profile)
-    void getProfile() {
-        mGithubServie.getOwnProfile(mGithubApp.getUserName())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<User>() {
-                    @Override
-                    public void onCompleted() {
-                        Timber.e("onCompleted");
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Timber.e(e, "user - error");
-                    }
-
-                    @Override
-                    public void onNext(User user) {
-                        Timber.e("Fetch successfully user.name = %s", user.name);
-                    }
-                });
+    @OnClick(R.id.btn_join)
+    void onJoinClick() {
+         String url = "https://github.com/join";
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        startActivity(intent);
     }
 
 
     @OnClick(R.id.btn_login)
-    void loginClick() {
-        work();
-    }
-
-    private void work() {
+    void onLoginClick() {
 
         //https://github.com/thiagolocatelli/android-github-oauth
-
         if (mGithubApp.hasAccessToken()) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(
                     LoginActivity.this);
@@ -100,23 +78,23 @@ public class LoginActivity extends FragmentActivity {
             mGithubApp.authorize();
         }
 
-        if (mGithubApp.hasAccessToken()) {
-            Log.e("result ", "token--" + mGithubApp.getAccessToken());
-        }
-
     }
-
 
     GithubApp.OAuthAuthenticationListener listener = new GithubApp.OAuthAuthenticationListener() {
 
         @Override
         public void onSuccess() {
+            GithubPreManager.storeLoginState(true);
             Toast.makeText(LoginActivity.this, "Access token successful", Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+            startActivity(intent);
+            LoginActivity.this.finish();
         }
 
         @Override
         public void onFail(String error) {
-            Toast.makeText(LoginActivity.this, error, Toast.LENGTH_SHORT).show();
+            GithubPreManager.storeLoginState(false);
         }
     };
 

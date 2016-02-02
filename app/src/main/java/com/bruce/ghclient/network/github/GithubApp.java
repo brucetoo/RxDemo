@@ -17,7 +17,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class GithubApp {
-    private GithubSession mSession;
+
     private GithubDialog mDialog;
     private OAuthAuthenticationListener mListener;
     private ProgressDialog mProgress;
@@ -48,8 +48,7 @@ public class GithubApp {
     public GithubApp(Context context, String clientId, String clientSecret,
                      String callbackUrl) {
 
-        mSession = new GithubSession(context);
-        mAccessToken = mSession.getAccessToken();
+        mAccessToken = GithubPreManager.getAccessToken();
         mCallbackUrl = callbackUrl;
         mTokenUrl = TOKEN_URL + "client_id=" + clientId + "&client_secret="
                 + clientSecret + "&redirect_uri=" + mCallbackUrl;
@@ -107,7 +106,7 @@ public class GithubApp {
                             response.indexOf("access_token=") + 13,
                             response.indexOf("&token_type"));
                     Log.i(TAG, "Got access token: " + mAccessToken.substring(0, mAccessToken.indexOf("&scope=")));
-                    mSession.storeAccessToken(mAccessToken.substring(0, mAccessToken.indexOf("&scope=")));
+                    GithubPreManager.storeAccessToken(mAccessToken.substring(0, mAccessToken.indexOf("&scope=")));
                 } catch (Exception ex) {
                     what = 1;
                     ex.printStackTrace();
@@ -147,7 +146,7 @@ public class GithubApp {
                             .nextValue();
                     String login = jsonObj.getString("login");
                     Log.i(TAG, "Got user name: " + login);
-                    mSession.storeUserName(login);
+                    GithubPreManager.storeUserName(login);
                 } catch (Exception ex) {
                     what = 1;
                     ex.printStackTrace();
@@ -184,14 +183,6 @@ public class GithubApp {
         mListener = listener;
     }
 
-    public String getAccessToken() {
-        return mSession.getAccessToken();
-    }
-
-    public String getUserName(){
-        return mSession.getUserName();
-    }
-
 
     public void authorize() {
         mDialog.show();
@@ -225,7 +216,7 @@ public class GithubApp {
 
     public void resetAccessToken() {
         if (mAccessToken != null) {
-            mSession.resetAccessToken();
+            GithubPreManager.resetAccessToken();
             mAccessToken = null;
         }
     }
