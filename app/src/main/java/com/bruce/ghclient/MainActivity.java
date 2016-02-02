@@ -31,6 +31,7 @@ import com.bruce.ghclient.widget.ProgressWheel;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.jakewharton.rxbinding.support.design.widget.RxNavigationView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,14 +95,19 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setHomeButtonEnabled(true);
         drawerToggle.syncState();
 
-        mNavView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(MenuItem item) {
-                item.setChecked(true);
-                mDrawerLayout.closeDrawers();
-                return true;
-            }
+        RxNavigationView.itemSelections(mNavView).subscribe(menuItem -> {
+            menuItem.setChecked(true);
+            mDrawerLayout.closeDrawers();
         });
+//        mNavView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+//            @Override
+//            public boolean onNavigationItemSelected(MenuItem item) {
+//                item.setChecked(true);
+//                mDrawerLayout.closeDrawers();
+//                return true;
+//            }
+//        });
+
     }
 
     private void setUpViewPager() {
