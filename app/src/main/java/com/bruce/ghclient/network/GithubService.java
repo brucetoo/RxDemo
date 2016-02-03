@@ -1,6 +1,7 @@
 package com.bruce.ghclient.network;
 
 import com.bruce.ghclient.models.User;
+import com.bruce.ghclient.models.realm.UserRealm;
 
 import retrofit2.http.GET;
 import retrofit2.http.Path;
@@ -17,5 +18,5 @@ public interface GithubService {
     Observable<User> getOwnProfile(@Path("access_token") String token);
 
     @GET("/users/{user}")
-    Observable<User> getUserProfile(@Path("user") String userName);
+    Observable<UserRealm> getUserProfile(@Path("user") String userName);
 }

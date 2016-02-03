@@ -5,9 +5,14 @@ import android.widget.Toast;
 
 import com.bruce.ghclient.GHClientApp;
 import com.bruce.ghclient.network.github.GithubPreManager;
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 
+import io.realm.RealmObject;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -27,8 +32,23 @@ public class GithubServiceManager {
     private GithubServiceManager(){}
 
     public static GithubService createGithubService(){
+
+        //https://realm.io/docs/java/latest/#retrofit
+        //to Add Realm in Retrofit2
+        Gson gson = new GsonBuilder().setExclusionStrategies(new ExclusionStrategy() {
+            @Override
+            public boolean shouldSkipField(FieldAttributes f) {
+                return f.getDeclaringClass().equals(RealmObject.class);
+            }
+
+            @Override
+            public boolean shouldSkipClass(Class<?> clazz) {
+                return false;
+            }
+        }).create();
+
         Retrofit.Builder builder = new Retrofit.Builder()
-                .addConverterFactory(GsonConverterFactory.create())// 返回数据解析gson
+                .addConverterFactory(GsonConverterFactory.create(gson))// 返回数据解析gson
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())  // 使用 rxjava
                 .baseUrl("https://api.github.com");
 

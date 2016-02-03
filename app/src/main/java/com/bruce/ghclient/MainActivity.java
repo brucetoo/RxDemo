@@ -20,7 +20,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bruce.ghclient.models.User;
+import com.bruce.ghclient.models.realm.UserRealm;
 import com.bruce.ghclient.network.GithubService;
 import com.bruce.ghclient.network.GithubServiceManager;
 import com.bruce.ghclient.network.github.GithubPreManager;
@@ -38,9 +38,11 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import io.realm.Realm;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
+import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -62,12 +64,16 @@ public class MainActivity extends AppCompatActivity {
     private TextView mName;
     private TextView mLocation;
     private ProgressWheel mProgress;
+    private Realm mRealm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        mGithubService = GithubServiceManager.createGithubService();
+        mRealm = Realm.getDefaultInstance();
 
         setUpToolBar();
 
@@ -98,16 +104,21 @@ public class MainActivity extends AppCompatActivity {
         RxNavigationView.itemSelections(mNavView).subscribe(menuItem -> {
             menuItem.setChecked(true);
             mDrawerLayout.closeDrawers();
-        });
-//        mNavView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-//            @Override
-//            public boolean onNavigationItemSelected(MenuItem item) {
-//                item.setChecked(true);
-//                mDrawerLayout.closeDrawers();
-//                return true;
-//            }
-//        });
+            switch (menuItem.getItemId()){
+                case R.id.nav_gist:
 
+                    break;
+                case R.id.nav_issue:
+
+                    break;
+                case R.id.nav_bookmark:
+
+                    break;
+                case R.id.nav_feedback:
+
+                    break;
+            }
+        });
     }
 
     private void setUpViewPager() {
@@ -122,37 +133,54 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        mGithubService = GithubServiceManager.createGithubService();
-        mGithubService.getUserProfile(GithubPreManager.getUserName())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<User>() {
-                    @Override
-                    public void onCompleted() {
 
-                    }
+        if(mRealm.where(UserRealm.class).findAll().size() != 0){
+            Timber.e("There are data persis in Realm");
+             mRealm.where(UserRealm.class).findAllSortedAsync("name").asObservable()
+                     .subscribe(userRealms -> refreshHeaderView(userRealms.first()));
+        }else {
+            Timber.e("Fetch data from Remote...");
+            mGithubService.getUserProfile(GithubPreManager.getUserName())
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Subscriber<UserRealm>() {
+                        @Override
+                        public void onCompleted() {
 
-                    @Override
-                    public void onError(Throwable e) {
-                       mProgress.setVisibility(View.GONE);
-                    }
+                        }
 
+                        @Override
+                        public void onError(Throwable e) {
+                            mProgress.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onNext(UserRealm user) {
+
+                            //persis data
+                            mRealm.beginTransaction();
+                            mRealm.copyToRealmOrUpdate(user);
+                            mRealm.commitTransaction();
+
+                            refreshHeaderView(user);
+                        }
+                    });
+        }
+    }
+
+    private void refreshHeaderView(UserRealm user) {
+        mProgress.setVisibility(View.GONE);
+        mName.setText(user.getName());
+        mLocation.setText(user.getLocation());
+        Glide.with(MainActivity.this)
+                .load(user.getAvatar_url())
+                .asBitmap()
+                .placeholder(R.drawable.ic_launcher)
+                .into(new SimpleTarget<Bitmap>() {
                     @Override
-                    public void onNext(User user) {
-                        mProgress.setVisibility(View.GONE);
-                        mName.setText(user.name);
-                        mLocation.setText(user.location);
-                        Glide.with(MainActivity.this)
-                                .load(user.avatar_url)
-                                .asBitmap()
-                                .placeholder(R.drawable.ic_launcher)
-                                .into(new SimpleTarget<Bitmap>() {
-                                    @Override
-                                    public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                                         mAvatar.setImageBitmap(resource);
-                                         mHeaderView.setBackground(new BitmapDrawable(ImageUtils.blurBitmap(resource, 20)));
-                                    }
-                                });
+                    public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                        mAvatar.setImageBitmap(resource);
+                        mHeaderView.setBackground(new BitmapDrawable(ImageUtils.blurBitmap(resource, 20)));
                     }
                 });
     }
@@ -190,6 +218,12 @@ public class MainActivity extends AppCompatActivity {
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        mRealm.close();
+        super.onDestroy();
     }
 
     static class Adapter extends FragmentPagerAdapter {
