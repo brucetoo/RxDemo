@@ -14,7 +14,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -33,11 +32,17 @@ import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.jakewharton.rxbinding.support.design.widget.RxNavigationView;
 
+import org.eclipse.egit.github.core.User;
+import org.eclipse.egit.github.core.client.GitHubClient;
+import org.eclipse.egit.github.core.service.UserService;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import io.realm.Realm;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -104,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
         RxNavigationView.itemSelections(mNavView).subscribe(menuItem -> {
             menuItem.setChecked(true);
             mDrawerLayout.closeDrawers();
-            switch (menuItem.getItemId()){
+            switch (menuItem.getItemId()) {
                 case R.id.nav_gist:
 
                     break;
@@ -185,11 +190,33 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    @OnClick(R.id.btn_search)
+    public void onSearchClick(){
+        GitHubClient client = new GitHubClient();
+        client.setCredentials("brucetoo", "ty8922436");
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                UserService service = new UserService(client);
+                try {
+                    List<User> followers = service.getFollowers();
+                    for(User user : followers) {
+                        Timber.e("Follower %s",user.getAvatarUrl());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+//                RepositoryService service = new RepositoryService();
+//                try {
+//                    for (Repository repo : service.getRepositories("brucetoo"))
+//                        System.out.println(repo.getName() + " Watchers: " + repo.getWatchers());
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+            }
+        }).start();
+
     }
 
     @Override
@@ -197,9 +224,6 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         switch (id) {
-            case R.id.action_settings:
-
-                break;
             case android.R.id.home:
                 mDrawerLayout.openDrawer(GravityCompat.START);
                 break;
@@ -211,12 +235,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        if (System.currentTimeMillis() - preClickTime >= 2000) {
-            preClickTime = System.currentTimeMillis();
-            Toast.makeText(getApplicationContext(), "Press again to Exit!",
-                    Toast.LENGTH_SHORT).show();
-        } else {
-            super.onBackPressed();
+        if(mDrawerLayout.getVisibility() == View.GONE) {
+            if (System.currentTimeMillis() - preClickTime >= 2000) {
+                preClickTime = System.currentTimeMillis();
+                Toast.makeText(getApplicationContext(), "Press again to Exit!",
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                super.onBackPressed();
+            }
+        }else {
+            mDrawerLayout.closeDrawers();
         }
     }
 
